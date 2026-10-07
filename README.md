@@ -17,6 +17,29 @@ models once from Hugging Face on first run of the firewall.
 
 ---
 
+flowchart LR
+    U[User / AI Agent] --> PEP[FastAPI Security Gateway]
+
+    PEP --> R[Risk & Token Budget]
+    R --> S[Prompt Injection Sanitizer]
+    S --> OPA[OPA Policy Engine]
+
+    OPA -->|Allowed| CAP[HMAC Capability Token]
+    OPA -->|Denied| BLOCK[❌ Block Request]
+
+    CAP --> TOOL[Clinical Tools]
+    TOOL --> V[Verify Token<br/>Scope + TTL + Replay]
+
+    V -->|Valid| DATA[(Patient / Clinical Data)]
+    V -->|Invalid| BLOCK
+
+    DATA --> PHI[PHI Redaction]
+    PHI --> RESP[Sanitized Response]
+
+    PEP --> LOG[(Security Audit Logs)]
+    TOOL --> LOG
+    PHI --> LOG
+
 ## 1. Agentic Firewall
 
 Four detection layers, in order: regex → gibberish heuristic → ML
