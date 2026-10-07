@@ -16,48 +16,6 @@ usable together or independently:
 models once from Hugging Face on first run of the firewall.
 
 ---
-
-## Architecture
-
-```mermaid
-flowchart LR
-    U[User / AI Agent] --> PEP[FastAPI Security Gateway]
-
-    PEP --> R[Risk & Token Budget]
-    R --> S[Prompt Injection Sanitizer]
-    S --> OPA[OPA Policy Engine]
-
-    OPA -->|Allowed| CAP[HMAC Capability Token]
-    OPA -->|Denied| BLOCK[❌ Block Request]
-
-    CAP --> TOOL[Clinical Tools]
-    TOOL --> V[Verify Token<br/>Scope + TTL + Replay]
-
-    V -->|Valid| DATA[(Patient / Clinical Data)]
-    V -->|Invalid| BLOCK
-
-    DATA --> PHI[PHI Redaction]
-    PHI --> RESP[Sanitized Response]
-
-    PEP --> LOG[(Security Audit Logs)]
-    TOOL --> LOG
-    PHI --> LOG
-```
-
-### Request Flow
-
-1. **Request:** A user or AI agent sends a request to the FastAPI security gateway.
-2. **Risk Check:** The gateway checks request rate and token-budget limits.
-3. **Sanitization:** Incoming prompts are checked for prompt-injection patterns.
-4. **Authorization:** OPA evaluates the request against Rego security policies.
-5. **Capability Token:** Approved requests receive a short-lived HMAC-SHA256 capability token scoped to the specific tool and patient.
-6. **Tool Verification:** The clinical tool independently verifies the token, scope, expiry, and replay status.
-7. **PHI Protection:** Clinical output is scanned and sensitive information is redacted before being returned.
-8. **Audit:** Security events and tool activity are recorded in structured JSON audit logs.
-
-**Core principle:** The AI agent is never trusted by default. Every tool request must be authenticated, authorized, scoped, verified, and audited before sensitive clinical actions are allowed.
-
-
 ## 1. Agentic Firewall
 
 Four detection layers, in order: regex → gibberish heuristic → ML
